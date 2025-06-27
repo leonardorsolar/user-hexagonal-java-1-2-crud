@@ -86,6 +86,17 @@ mvn clean install
 mvn spring-boot:run
 ```
 
+#### Visualizar
+
+No navegador
+http://localhost:8080/api/usuarios/health
+
+no terminal:
+
+```bash
+curl -X GET http://localhost:8080/api/usuarios/health
+```
+
 # Parte 2: CRUD de Usuários - Arquitetura em 3 Camadas
 
 ## Java Spring Boot + SQLite + Boas Práticas
@@ -309,6 +320,34 @@ O erro jakarta.validation desaparecerá e suas anotações como @NotBlank, @Emai
 ├── entity/
 │ └── Usuario.java
 
+### ✅ Papel da **Entidade** no Spring Boot
+
+No Spring Boot, uma **entidade** é usada internamente na camada de repositórios e serviços, e é uma **classe que representa uma tabela no banco de dados**. Ela faz parte do mapeamento objeto-relacional (ORM), geralmente usando a especificação **JPA** (Jakarta Persistence API).
+
+---
+
+### 🧩 No seu exemplo abaixo:
+
+```java
+@Entity
+@Table(name = "usuarios")
+public class Usuario {
+```
+
+#### 📌 O que isso faz?
+
+-   `@Entity`: Diz ao Spring (via JPA) que a classe `Usuario` é uma entidade que será **gerenciada pelo Hibernate** e **armazenada no banco de dados**.
+-   `@Table(name = "usuarios")`: Mapeia essa entidade para a tabela chamada `usuarios` no banco.
+
+---
+
+### 🧠 Papel da entidade `Usuario`:
+
+1. **Representar um registro da tabela `usuarios`** no banco como um objeto Java.
+2. **Permitir operações CRUD** (criar, ler, atualizar, excluir) de forma automática via JPA.
+3. **Ser usada por repositórios e serviços** para persistência de dados.
+4. **Validar os dados com anotações** (como `@NotBlank`, `@Email`, `@Size`) antes de salvar.
+
 Dentro da pasta entity atualize o arquivo Usuario.java
 
 ```java
@@ -414,6 +453,42 @@ public class Usuario {
 }
 ```
 
+O que são anotações (annotations) no Spring Boot?
+Anotações em Spring Boot são metadados usados para configurar o comportamento de classes, métodos, atributos ou parâmetros de forma declarativa, ou seja, sem precisar escrever código adicional para isso.
+Para que servem?
+As anotações:
+Eliminam configurações manuais.
+Permitem que o Spring entenda o papel de cada componente.
+Facilitam a injeção de dependências, mapeamento de rotas, persistência de dados, validações, etc.
+Analogia simples:
+Imagine que você coloque uma etiqueta em algo (por exemplo: "Frágil", "Urgente", "Refrigerado"). O sistema de entregas sabe o que fazer com o pacote baseado nessas etiquetas.
+As anotações funcionam do mesmo jeito para o Spring: ele entende e age conforme as “etiquetas” que você coloca no código.
+
+### **1. Anotações JPA (Jakarta Persistence API) – Mapeamento ORM**
+
+Usadas para mapear a classe `Usuario` como uma entidade de banco de dados:
+
+-   `@Entity`: Define que a classe é uma entidade JPA.
+-   `@Table(name = "usuarios")`: Especifica o nome da tabela no banco.
+-   `@Id`: Define o campo `id` como chave primária.
+-   `@GeneratedValue(...)`: Define a estratégia de geração automática da chave primária.
+-   `@Column(...)`: Define as propriedades das colunas, como nome, se é `nullable`, tamanho, etc.
+-   `@PreUpdate`: Método de **callback** chamado antes da atualização — aqui, atualiza `dataAtualizacao`.
+
+> 🧠 **Objetivo OO:** Ligar o objeto `Usuario` diretamente a uma estrutura relacional (tabela `usuarios`), garantindo persistência automática.
+
+---
+
+### **2. Anotações de Validação – Jakarta Validation (Bean Validation)**
+
+Usadas para garantir regras de integridade e formato antes de salvar ou atualizar:
+
+-   `@NotBlank`: Garante que o campo não seja nulo nem vazio (ex: `nome`, `email`, `senha`).
+-   `@Size`: Limita o tamanho mínimo e máximo de uma `String`.
+-   `@Email`: Verifica se o e-mail tem um formato válido.
+
+> 🧠 **Objetivo OO:** Proteger o estado do objeto, garantindo que ele sempre seja criado ou modificado com dados válidos.
+
 ### 2.3 DTOs (Data Transfer Objects)
 
 DTOs são objetos usados para transferir dados entre camadas ou sistemas, geralmente entre o backend e o frontend de uma aplicação. Eles servem para:
@@ -426,10 +501,12 @@ DTO é um padrão de projeto (design pattern) para estruturar objetos que transp
 
 #### UsuarioDTO.java (Resposta da API)
 
+```
 ├── dto/
 │ ├── UsuarioDTO.java
 │ ├── CreateUsuarioDTO.java
 │ └── UpdateUsuarioDTO.java
+```
 
 UsuarioDTO é usado para retornar dados da API ao cliente.
 CreateUsuarioDTO contém os dados e validações para criar um usuário.
@@ -572,13 +649,17 @@ public class UpdateUsuarioDTO {
 
 Crie a pasta mapper e dentro dela crie o arquivo `UsuarioMapper.java`
 
+```
 ├── mapper/
 │ └── UsuarioMapper.java
+```
 
 O mapper serve para converter dados entre diferentes camadas da aplicação, transformando:
-Entidades (modelos de domínio) em DTOs para enviar dados à API.
-DTOs em entidades para persistência no banco.
-Atualizar entidades com dados de DTOs de atualização.
+
+-   Entidades (modelos de domínio) em DTOs para enviar dados à API.
+-   DTOs em entidades para persistência no banco.
+-   Atualizar entidades com dados de DTOs de atualização.
+
 Ou seja, ele faz a tradução entre os formatos usados internamente e os expostos externamente, facilitando o desacoplamento e organização do código.
 
 #### UsuarioMapper.java
@@ -661,10 +742,12 @@ public class UsuarioMapper {
 
 ## Tratamento de Erros
 
+```
 ├── exception/
 │ ├── GlobalExceptionHandler.java
 │ ├── UsuarioNotFoundException.java
 │ └── EmailJaExisteException.java
+```
 
 exception = Melhora o controle de erros, legibilidade do código e experiência do usuário.
 
@@ -790,8 +873,10 @@ public class GlobalExceptionHandler {
 
 ### 2.6 Camada de Repository
 
+```
 ├── repository/
-│ └── UsuarioRepository.java
+  └── UsuarioRepository.java
+```
 
 Crie a pasta repository e dentro dela o arquivo UsuarioRepository.java
 
@@ -852,12 +937,62 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 }
 ```
 
+## ✅ O que é `JpaRepository`?
+
+`JpaRepository` é uma **interface do Spring Data JPA** que fornece **métodos prontos para acessar o banco de dados**, como:
+
+-   `save()`: salvar ou atualizar um registro.
+-   `findById()`: buscar por ID.
+-   `findAll()`: buscar todos os registros.
+-   `deleteById()`: deletar por ID.
+-   E muitos outros!
+
+---
+
+### 📦 Exemplo:
+
+```java
+public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
+}
+```
+
+Aqui, você está dizendo:
+
+-   Essa interface vai trabalhar com a **entidade `Usuario`**.
+-   O tipo do ID da entidade é **`Long`**.
+-   O Spring vai gerar automaticamente as implementações desses métodos.
+
+---
+
+## ⚙️ O que você ganha com isso?
+
+Sem `JpaRepository`:
+
+```java
+String sql = "SELECT * FROM usuarios WHERE id = ?";
+PreparedStatement stmt = connection.prepareStatement(sql);
+// etc.
+```
+
+Com `JpaRepository`:
+
+```java
+usuarioRepository.findById(1L);
+usuarioRepository.save(usuario);
+usuarioRepository.deleteById(1L);
+```
+
+Obs.: Foi usado @Query pata realizar consultas personalidas
+Mesmo escrevendo suas próprias consultas com @Query, o JpaRepository continua sendo essencial
+
 ### 2.7 Camada de Service
 
+```
 ├── service/
 │ ├── UsuarioService.java
 │ └── impl/
 │ └── UsuarioServiceImpl.java
+```
 
 Na camada de serviço teremos que criar a pasta service e dentro da pasta serviço o arquivo UsuarioService.java.
 Dentro da pasta service crie também a pasta impl e dentro dela o arquivo UsuarioServiceImpl.java
@@ -884,13 +1019,15 @@ UsuarioServiceImpl (classe)
 ```
 
 Explicação resumida:
-UsuarioServiceImpl implementa a interface UsuarioService.
-UsuarioServiceImpl depende do UsuarioRepository para acessar o banco.
-Usa o UsuarioMapper para converter entre entidade e DTO.
-Usa BCryptPasswordEncoder para criptografar senhas.
+
+-   UsuarioServiceImpl implementa a interface UsuarioService.
+-   UsuarioServiceImpl depende do UsuarioRepository para acessar o banco.
+-   Usa o UsuarioMapper para converter entre entidade e DTO.
+-   Usa BCryptPasswordEncoder para criptografar senhas.
+
 Esse esquema ajuda a entender a responsabilidade e as dependências dentro da camada de serviço
 
-Sem DIP (acoplamento direto)
+Sem DIP (Princípio da Inversão de Dependência) (acoplamento direto)
 
 ```bash
 Controller
@@ -900,9 +1037,10 @@ Service (implementação concreta)
 Repository
 ```
 
+Observe que a Controller depende (importa, usa) do Service. O Service depende (importa, usa) do Repository.
 Nesse caso, o Controller depende diretamente da implementação concreta do Service. Isso gera forte acoplamento — se a implementação mudar, o controller também pode ter que mudar.
 
-Com DIP (boa prática com interfaces)
+Com DIP (Princípio da Inversão de Dependência) (boa prática com interfaces)
 
 ```bash
 Controller
@@ -913,19 +1051,39 @@ UsuarioService (interface)  ←  UsuarioServiceImpl
 
 ```
 
+Observe que a Controller depende (importa, usa) a interface e não a Service. UsuarioServiceImpl implementa os métodos da interface UsuarioService. UsuarioServiceImpl depende (importa, usa) do Repository.
+
 O que mudou:
-O Controller não sabe quem é a implementação, apenas usa a interface UsuarioService.
-A classe UsuarioServiceImpl implementa essa interface.
-O Spring injeta a implementação correta via injeção de dependência, respeitando o DIP.
+
+-   O Controller não sabe quem é a implementação, apenas usa a interface UsuarioService.
+-   A classe UsuarioServiceImpl implementa essa interface.
+-   O Spring injeta a implementação correta via injeção de dependência, respeitando o DIP.
 
 Benefícios:
-Desacoplamento: o controller pode funcionar com qualquer implementação de UsuarioService.
-Facilidade de teste: você pode injetar um mock de UsuarioService no teste do controller.
-Manutenção e evolução do código com menos impacto.
+
+-   Desacoplamento: o controller pode funcionar com qualquer implementação de UsuarioService.
+-   Facilidade de teste: você pode injetar um mock de UsuarioService no teste do controller.
+-   Manutenção e evolução do código com menos impacto.
 
 A inversão está no fato de que o alto nível (Controller) depende de uma abstração, e o baixo nível (ServiceImpl) é que implementa essa abstração — e não o contrário.
 
-Vamso agora adicioonar o código
+## 🧠 O que é **Inversão de Dependência** (ou **Inversão de Controle**)?
+
+> É quando **o código de alto nível (como o controller)** **não conhece os detalhes do código de baixo nível (como a classe que salva no banco)**.
+> Em vez disso, ele depende de **uma interface (abstração)**, e quem fornece a implementação concreta é o Spring.
+
+---
+
+### 🎯 Explicação simples:
+
+Imagine isso:
+
+-   Você (o Controller) **quer um carregador de celular**.
+-   Você **pede por uma “entrada USB-C” (interface)**.
+-   Quem te entrega pode ser um carregador da Samsung, Motorola, ou outro (implementação concreta).
+-   Você **não se importa com a marca**, só precisa que seja **USB-C**.
+
+Vamso agora adicionar ao código
 
 #### UsuarioService.java (Interface)
 
@@ -996,34 +1154,6 @@ public interface UsuarioService {
 ```
 
 #### UsuarioServiceImpl.java (Implementação)
-
-Para a implementação do UsuarioServiceImpl precisaremos adicionar a dependência no arquivo `pom.xml`
-Adicionar a dependência do Spring Security no seu pom.xml.
-
-Onde colocar?
-No bloco <dependencies> do seu pom.xml, como abaixo:
-
-```java
-<!-- Spring Boot Starter Security -->
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-security</artifactId>
-</dependency>
-```
-
-### ✅ Depois disso:
-
-1. Salve o `pom.xml`.
-2. Rode `mvn clean install` ou deixe o IDE atualizar as dependências.
-3. O erro de importação do `org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder` será resolvido.
-
-Aguarde o download das dependências.
-
-### Executar a aplicação:
-
-```bash
-mvn spring-boot:run
-```
 
 Adcione o código ao arquivo UsuarioServiceImpl.java
 
@@ -1193,12 +1323,43 @@ public class UsuarioServiceImpl implements UsuarioService {
 }
 ```
 
+Para a implementação do UsuarioServiceImpl precisaremos adicionar a dependência no arquivo `pom.xml`
+Adicionar a dependência do Spring Security no seu pom.xml.
+
+Onde colocar?
+No bloco <dependencies> do seu pom.xml, como abaixo:
+
+```java
+<!-- Spring Boot Starter Security -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-security</artifactId>
+</dependency>
+```
+
+### ✅ Depois disso:
+
+1. Salve o `pom.xml`.
+2. Rode `mvn clean install` ou deixe o IDE atualizar as dependências.
+3. O erro de importação do `org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder` será resolvido.
+
+Aguarde o download das dependências.
+
+### Executar a aplicação:
+
+```bash
+mvn spring-boot:run
+```
+
 ### 2.9 Configuração Adicional
 
 #### DatabaseConfig.java
 
 └── config/
 | └── DatabaseConfig.java
+
+O que é essa configuração?
+O arquivo DatabaseConfig.java dentro da pasta config é uma classe de configuração do Spring, responsável por declarar beans que serão gerenciados pelo container do Spring.
 
 Criaremos a pasta config e o arquivo DatabaseConfig.java
 
@@ -1239,9 +1400,6 @@ Permite trocar facilmente a implementação do encoder se necessário, alterando
 │ └── UsuarioController.java
 
 Teremos agora que criar a pasta controller e o arquivo UsuarioController.java
-
-O que é essa configuração?
-O arquivo DatabaseConfig.java dentro da pasta config é uma classe de configuração do Spring, responsável por declarar beans que serão gerenciados pelo container do Spring.
 
 #### UsuarioController.java
 
@@ -1342,11 +1500,61 @@ curl -X POST http://localhost:8080/api/usuarios \
   }'
 ```
 
+vai retornar:
+{"id":1,"nome":"João Silva","email":"joao@email.com","ativo":true,"dataCriacao":"2025-06-27T08:12:24","dataAtualizacao":null}
+
 #### 3. Listar Usuários
 
 ```bash
 curl -X GET http://localhost:8080/api/usuarios
 ```
+
+Vai acontecer um erro:
+{"error":"Erro interno do servidor","message":"Ocorreu um erro inesperado","timestamp":"2025-06-27T08:13:53.817822528","status":500}
+Procure resolver este problema.
+
+## O que está acontecendo?
+
+-   Quando um erro acontece na sua aplicação e você **não trata a exceção**, o Spring retorna um erro 500 com uma mensagem genérica:
+
+    ```json
+    {
+        "error": "Erro interno do servidor",
+        "message": "Ocorreu um erro inesperado",
+        "timestamp": "...",
+        "status": 500
+    }
+    ```
+
+-   Isso não ajuda quem consome sua API a entender o problema.
+    Você como programador deveria ter controle exato do que está acontecendo.
+
+## Como resolver?
+
+### Passo 1: **Criar uma exceção personalizada**
+
+Essa exceção vai representar casos específicos, como "Usuário não encontrado".
+
+### Passo 2: **Lançar essa exceção no seu código quando o erro ocorrer**
+
+### Passo 3: **Criar um handler global para tratar exceções**
+
+Assim, quando sua exceção personalizada for lançada, o Spring responde com um JSON claro e o status HTTP correto (404).
+
+Tente implementar uma exceção personalizada e trate-a globalmente para retornar HTTP 404.
+
+## Resultado esperado:
+
+-   Se o usuário não existir, o cliente recebe um JSON com status **404** e mensagem clara.
+-   Se acontecer outro erro inesperado, o cliente recebe um JSON com status **500** e mensagem genérica.
+
+---
+
+## Por que fazer assim?
+
+-   Melhora a comunicação da API com o cliente.
+-   Facilita o diagnóstico e o tratamento de erros.
+-   Evita o uso do erro 500 para tudo, que é muito genérico.
 
 #### 4. Buscar por ID
 
@@ -1354,17 +1562,23 @@ curl -X GET http://localhost:8080/api/usuarios
 curl -X GET http://localhost:8080/api/usuarios/1
 ```
 
+Vai acontecer um erro. Procure resolver este problema.
+
 #### 5. Buscar por Email
 
 ```bash
 curl -X GET http://localhost:8080/api/usuarios/email/joao@email.com
 ```
 
+Vai acontecer um erro. Procure resolver este problema.
+
 #### 6. Buscar por Nome
 
 ```bash
-curl -X GET "http://localhost:8080/api/usuarios/buscar?nome=João"
+curl -G --data-urlencode "nome=João" http://localhost:8080/api/usuarios/buscar
 ```
+
+Vai acontecer um erro. Procure resolver este problema.
 
 #### 7. Atualizar Usuário
 
@@ -1377,11 +1591,17 @@ curl -X PUT http://localhost:8080/api/usuarios/1 \
   }'
 ```
 
+Vai acontecer um erro. Procure resolver este problema.
+
 #### 8. Inativar Usuário
 
 ```bash
 curl -X DELETE http://localhost:8080/api/usuarios/1
 ```
+
+Vai acontecer um erro. Procure resolver este problema.
+Tente implementar
+Aqui poderia ter uma resposta de sucesso ou não quando for inativado
 
 #### 9. Reativar Usuário
 
@@ -1392,7 +1612,7 @@ curl -X PATCH http://localhost:8080/api/usuarios/1/reativar
 #### 10. Verificar se Email Existe
 
 ```bash
-curl -X GET http://localhost:8080/api/usuarios/email-existe/joao@email.com
+curl -X GET http://localhost:8080/api/usuarios/email-existe/joao%40email.com
 ```
 
 ### 3.4 Respostas Esperadas
